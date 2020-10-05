@@ -73,7 +73,7 @@ class EquipmentStatusUpdateApiView(APIView):
             raise ValidationError(detail=e)
 
     def get_action(self, request):
-        return 'activate' if request.get_full_path() else 'deactivate'
+        return 'deactivate' if 'deactivate' in request.get_full_path() else 'activate'
 
     def put(self, request, *args, **kwargs):
         eqp_code_list = request.data.get('codes')

@@ -44,6 +44,11 @@ class EquipmentVesselSerializer(ModelSerializer):
     class Meta:
         model = Equipment
         fields = ('name', 'code', 'location')
+
+    def validate_code(self, value):
+        if not value.isalnum():
+            raise ValidationError(detail='Code must be alphanumeric.')
+        return value
     
     def create(self, validated_data):
         vessel_code = self.context.get('vessel_code')
