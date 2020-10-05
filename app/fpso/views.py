@@ -40,7 +40,11 @@ class VesselEquipmentListApiView(ListAPIView):
     search_fields =  ['status']
 
     def list(self, request, *args, **kwargs):
-        self.queryset = self.queryset.filter(vessel__code=kwargs.get('code'))
+        try:
+            vessel =Vessel.objects.get(code=kwargs.get('code'))
+            self.queryset = self.queryset.filter(vessel=vessel)
+        except (Vessel.DoesNotExist) as e:
+            raise ValidationError(detail=e)
         return super(VesselEquipmentListApiView, self).list(request, *args, **kwargs)
 
 
@@ -81,7 +85,7 @@ class EquipmentStatusUpdateApiView(APIView):
 
         for eqp_code in eqp_code_list:
             eqp = self.get_equipment(eqp_code)
-            eqp.activate() if action == 'deactivate' else eqp.deactivate()
+            eqp.deactivate() if action == 'deactivate' else eqp.activate()
             instances.append(eqp)
 
         serializer = EquipmentListSerializer(instances, many=True)
