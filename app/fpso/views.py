@@ -1,47 +1,52 @@
 from django.http import JsonResponse
 
-from rest_framework import status
-from rest_framework.exceptions import NotFound, ValidationError
+from rest_framework.exceptions import ValidationError
 from rest_framework.filters import SearchFilter
-from rest_framework.generics import CreateAPIView, ListAPIView, UpdateAPIView
+from rest_framework.generics import CreateAPIView, ListAPIView
 from rest_framework.response import Response 
+from rest_framework.status import HTTP_200_OK, HTTP_201_CREATED
 from rest_framework.views import APIView
 
-from . import models, serializers
+from .models import (
+    Equipment,
+    Vessel
+)
+
+from .serializers import (
+    EquipmentListSerializer,
+    EquipmentVesselSerializer,
+    VesselSerializer
+)
+
+from .filters import StatusSearchFilter
 
 
 class VesselListApiView(ListAPIView):
-    queryset = models.Vessel.objects.all()
-    serializer_class = serializers.VesselSerializer
+    queryset = Vessel.objects.all()
+    serializer_class = VesselSerializer
     filter_backends =  [SearchFilter]
     search_fields =  ['code']
 
 
 class VesselCreateApiView(CreateAPIView):
-    queryset = models.Vessel.objects.all()
-    serializer_class = serializers.VesselSerializer
+    queryset = Vessel.objects.all()
+    serializer_class = VesselSerializer
 
 
 class VesselEquipmentListApiView(ListAPIView):
-    queryset = models.Equipment.objects.all()
-    serializer_class = serializers.EquipmentListSerializer
+    queryset = Equipment.objects.all()
+    serializer_class = EquipmentListSerializer
+    filter_backends =  [StatusSearchFilter]
+    search_fields =  ['status']
 
     def list(self, request, *args, **kwargs):
-        kw_status = kwargs.get('status')
         self.queryset = self.queryset.filter(vessel__code=kwargs.get('code'))
-
-        if kw_status:
-            status_selected = models.Equipment.get_status_options(kw_status)
-            if status_selected is None:
-                raise NotFound(detail="Page not found.", code=404)
-            self.queryset = self.queryset.filter(status=status_selected)
-
         return super(VesselEquipmentListApiView, self).list(request, *args, **kwargs)
 
 
 class EquipmentCreateApiView(CreateAPIView):
-    queryset = models.Equipment.objects.all()
-    serializer_class = serializers.EquipmentVesselSerializer
+    queryset = Equipment.objects.all()
+    serializer_class = EquipmentVesselSerializer
 
     def create(self, request, *args, **kwargs):
         serializer = self.serializer_class(
@@ -51,11 +56,11 @@ class EquipmentCreateApiView(CreateAPIView):
         serializer.is_valid(raise_exception=True)
         self.perform_create(serializer)
         headers = self.get_success_headers(serializer.data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+        return Response(serializer.data, status=HTTP_201_CREATED, headers=headers)
 
 
 class EquipmentStatusUpdateApiView(APIView):
-    model = models.Equipment
+    model = Equipment
 
     def get_equipment(self, code):
         try:
@@ -79,6 +84,6 @@ class EquipmentStatusUpdateApiView(APIView):
             eqp.activate() if action == 'deactivate' else eqp.deactivate()
             instances.append(eqp)
 
-        serializer = serializers.EquipmentListSerializer(instances, many=True)
+        serializer = EquipmentListSerializer(instances, many=True)
  
-        return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.data, status=HTTP_200_OK)

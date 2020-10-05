@@ -7,8 +7,7 @@ urlpatterns = [
         path('', views.VesselListApiView.as_view() , name="vessel_list"),
         path('create/', views.VesselCreateApiView.as_view(), name="vessel_create"),
         path('<str:code>/equipments/', include([
-            path('list/', views.VesselEquipmentListApiView.as_view(), name="vessel_detail"),
-            path('list/<str:status>/', views.VesselEquipmentListApiView.as_view(), name="vessel_detail"),
+            path('', views.VesselEquipmentListApiView.as_view(), name="vessel_detail"),
             path('register/', views.EquipmentCreateApiView.as_view(), name="vessel_register"),
         ])),
     ])),
